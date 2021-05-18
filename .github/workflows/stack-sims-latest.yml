@@ -1,0 +1,32 @@
+name: stack-sims latest
+
+on:
+  schedule:
+    - cron: '45 10 * * 4'
+  push:
+    branches: 
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Disk Space
+        run: df -h && sudo apt-get clean && df -h 
+      - name: Docker login
+        run: echo '${{ secrets.DOCKERHUB_ACCESSTOK }}' | docker login --username heather999 --password-stdin
+      - name: checkout stack-sims
+        uses: actions/checkout@v2
+      - name : Docker prune
+        run: sudo docker system prune && df -h 
+      - name : Get weekly number
+        run:  echo "LSST_TAG=w_2021_$(date "+%U")" >> $GITHUB_ENV
+      - name: do docker build
+        run: docker build --no-cache --build-arg LSST_TAG=${{env.LSST_TAG}} -t lsstdesc/stack-sims:latest -f $GITHUB_WORKSPACE/Dockerfile . 
+      - name: test build
+        run: docker run --rm lsstdesc/stack-sims:latest /bin/bash -c "source /opt/lsst/software/stack/loadLSST.bash && setup lsst_distrib"
+      - name: Docker push
+        run: docker push lsstdesc/stack-sims:latest
+       
