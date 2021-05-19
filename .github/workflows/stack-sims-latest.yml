@@ -2,7 +2,7 @@ name: stack-sims latest
 
 on:
   schedule:
-    - cron: '45 10 * * 4'
+    - cron: '45 1 * * 0'
   push:
     branches: 
       - master
